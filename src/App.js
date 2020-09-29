@@ -5,19 +5,13 @@ import "./App.css";
 const stateMachine = {
   initial: "initial",
   states: {
-    initial: { on: { next: "loadingModel", text: "Load Model" } },
-    loadingModel: { on: { next: "modelReady", text: "Loading Model" } },
-    modelReady: { on: { next: "imageReady", text: "Upload Image" } }, //awaiting upload
-    imageReady: {
-      //ready
-      on: { next: "identifying" },
-      text: "Identify Breed",
-      showImage: true,
-    },
-    identifying: { on: { next: "complete", text: "Identifying…" } }, //classifying
+    initial: { on: { next: "loadingModel" } },
+    loadingModel: { on: { next: "awaitingUpload" } },
+    awaitingUpload: { on: { next: "ready" } },
+    ready: { on: { next: "classifying" }, showImage: true },
+    classifying: { on: { next: "complete" } },
     complete: {
-      on: { next: "modelReady" },
-      text: "Reset",
+      on: { next: "awaitingUpload" },
       showImage: true,
       showResults: true,
     },
@@ -27,38 +21,77 @@ const stateMachine = {
 const reducer = (currentState, event) =>
   stateMachine.states[currentState].on[event] || stateMachine.initial;
 
-const App = () => {
-  const [appState, dispatch] = useReducer(reducer, stateMachine.initial);
-  const next = () => dispatch("next");
+const formatResult = ({ className, probability }) => (
+  <li key={className}>{`${className}: ${(probability * 100).toFixed(2)}%`}</li>
+);
+function App() {
+  const [state, dispatch] = useReducer(reducer, stateMachine.initial);
   const [model, setModel] = useState(null);
-  const load = async () => {
+  const [imageUrl, setImageUrl] = useState(null);
+  const [results, setResults] = useState([]);
+  const inputRef = useRef();
+  const imageRef = useRef();
+
+  const next = () => dispatch("next");
+
+  const loadModel = async () => {
     next();
     const mobilenetModel = await mobilenet.load();
     setModel(mobilenetModel);
     next();
   };
-  const inputRef = useRef();
+
+  const handleUpload = (e) => {
+    const { files } = e.target;
+    if (files.length > 0) {
+      const url = URL.createObjectURL(files[0]);
+      setImageUrl(url);
+      next();
+    }
+  };
+
+  const identify = async () => {
+    next();
+    const classificationResults = await model.classify(imageRef.current);
+    setResults(classificationResults);
+    next();
+  };
+
+  const reset = () => {
+    setResults([]);
+    setImageUrl(null);
+    next();
+  };
 
   const buttonProps = {
-    initial: { text: "Load Model", action: load },
-    loadingModel: { text: "Loading Model…", action: () => {} },
-    modelReady: { text: "Upload Image", action: () => {} },
-    imageReady: { text: "Identify Breed", action: () => {} },
-    identifying: { text: "Identifying…", action: () => {} },
-    complete: { text: "Reset", action: () => {} },
+    initial: { text: "Load Model", action: loadModel },
+    loadingModel: { text: "Loading Model...", action: () => {} },
+    awaitingUpload: {
+      text: "Upload Photo",
+      action: () => inputRef.current.click(),
+    },
+    ready: { text: "Identify", action: identify },
+    classifying: { text: "Identifying", action: () => {} },
+    complete: { text: "Reset", action: reset },
   };
+
+  const { showImage = false, showResults = false } = stateMachine.states[state];
   return (
     <div>
-      <button onClick={buttonProps[appState].action}>
-        {buttonProps[appState].text}
-      </button>{" "}
+      {showImage && <img src={imageUrl} alt="upload preview" ref={imageRef} />}
+      {showResults && <ul>{results.map(formatResult)}</ul>}
       <input
         type="file"
         accept="image/*"
         capture="camera"
         ref={inputRef}
-      ></input>
+        onChange={handleUpload}
+      />
+      <button onClick={buttonProps[state].action}>
+        {buttonProps[state].text}
+      </button>
     </div>
   );
-};
+}
+
 export default App;
