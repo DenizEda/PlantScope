@@ -1,6 +1,42 @@
+* {
+  font-family: "Lora", serif;
+  margin: 0px;
+  padding: 0px;
+  color: #556b2f;
+
+  /* box-sizing: border-box; */
+}
 body {
-  color: white;
-  background: black;
+  background: url(bckground.jpeg);
+  background-repeat: no-repeat;
+  /* background-size: 100%; */
+  background-size: 110%;
+  height: 100%;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+nav {
+  font-family: "Sansita Swashed", cursive;
+  color: #556b2f;
+  font-size: 50px;
+  min-height: 8vh;
+  height: auto;
+  padding-bottom: 15px;
+  background-color: ivory;
+}
+
+p {
+  font-size: 20px;
+  font-weight: 200;
+  padding-bottom: 15px;
+}
+.body {
+  padding-top: 30px;
+  background-color: ivory;
 }
 div {
   display: flex;
@@ -20,17 +56,20 @@ input {
 button,
 label,
 ul {
-  width: 300px;
+  width: 200px;
   box-sizing: border-box;
-  border: solid 1px white;
-  background: black;
-  color: white;
+  border: solid 2px #556b2f;
+  border-radius: 25px;
+  /* background: black; */
+  /* color: white; */
   font-size: 24px;
   margin: auto;
   padding: 10px;
+  color: #556b2f;
 }
 img {
   width: 300px;
+  height: 300px;
   margin-bottom: 25px;
 }
 ul {

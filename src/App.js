@@ -1,13 +1,15 @@
 import React, { useReducer, useState, useRef } from "react";
 import * as mobilenet from "@tensorflow-models/mobilenet";
 import "./App.css";
+import empty from "./empty.jpeg";
+import Loading from "./Loading.gif";
 
 const stateMachine = {
   initial: "initial",
   states: {
-    initial: { on: { next: "loadingModel" } },
-    loadingModel: { on: { next: "awaitingUpload" } },
-    awaitingUpload: { on: { next: "ready" } },
+    initial: { on: { next: "loadingModel" }, emptyImage: true },
+    loadingModel: { on: { next: "awaitingUpload" }, loadingImage: true },
+    awaitingUpload: { on: { next: "ready" }, emptyImage: true },
     ready: { on: { next: "classifying" }, showImage: true },
     classifying: { on: { next: "complete" } },
     complete: {
@@ -64,32 +66,46 @@ function App() {
   };
 
   const buttonProps = {
-    initial: { text: "Load Model", action: loadModel },
-    loadingModel: { text: "Loading Model...", action: () => {} },
+    initial: { text: "Load Plants", action: loadModel },
+    loadingModel: { text: "Loading Plant Database...", action: () => {} },
     awaitingUpload: {
-      text: "Upload Photo",
+      text: "Upload Plant Photo",
       action: () => inputRef.current.click(),
     },
     ready: { text: "Identify", action: identify },
-    classifying: { text: "Identifying", action: () => {} },
+    classifying: { text: "Identifying Plant", action: () => {} },
     complete: { text: "Reset", action: reset },
   };
 
-  const { showImage = false, showResults = false } = stateMachine.states[state];
+  const {
+    showImage = false,
+    showResults = false,
+    emptyImage = false,
+    loadingImage = false,
+  } = stateMachine.states[state];
   return (
     <div>
-      {showImage && <img src={imageUrl} alt="upload preview" ref={imageRef} />}
-      {showResults && <ul>{results.map(formatResult)}</ul>}
-      <input
-        type="file"
-        accept="image/*"
-        capture="camera"
-        ref={inputRef}
-        onChange={handleUpload}
-      />
-      <button onClick={buttonProps[state].action}>
-        {buttonProps[state].text}
-      </button>
+      <nav> PlantScope</nav>
+      <div className="body">
+        <p>Upload an image, and determine what type of plant it is.</p>
+        {showImage && (
+          <img src={imageUrl} alt="upload preview" ref={imageRef} />
+        )}
+        {emptyImage && <img src={empty} alt="empty image" />}
+        {loadingImage && <img src={Loading} alt="empty image" />}
+
+        {showResults && <ul>{results.map(formatResult)}</ul>}
+        <input
+          type="file"
+          accept="image/*"
+          capture="camera"
+          ref={inputRef}
+          onChange={handleUpload}
+        />
+        <button onClick={buttonProps[state].action}>
+          {buttonProps[state].text}
+        </button>
+      </div>
     </div>
   );
 }
